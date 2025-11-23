@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Gorkem's AI</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .chat-container { width: 400px; background: white; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; height: 600px; }
+        .chat-header { background: #0078d4; color: white; padding: 15px; text-align: center; font-weight: bold; }
+        .chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .message { max-width: 80%; padding: 10px; border-radius: 10px; font-size: 14px; line-height: 1.4; }
+        .bot { background: #e0e0e0; align-self: flex-start; color: #333; }
+        .user { background: #0078d4; align-self: flex-end; color: white; }
+        .input-area { display: flex; padding: 10px; border-top: 1px solid #ddd; }
+        input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; outline: none; }
+        button { margin-left: 10px; padding: 10px 20px; background: #0078d4; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #005a9e; }
+        button:disabled { background: #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">Ask about Gorkem's Experience</div>
+    <div class="chat-box" id="chat-box">
+        <div class="message bot">Hello! I'm Gorkem's AI assistant. Ask me about his Data Analysis experience, SQL skills, or project history.</div>
+    </div>
+    <div class="input-area">
+        <input type="text" id="user-input" placeholder="Type a question..." onkeypress="handleEnter(event)">
+        <button onclick="sendMessage()" id="send-btn">Send</button>
+    </div>
+</div>
+
+<script>
+    async function sendMessage() {
+        const input = document.getElementById('user-input');
+        const chatBox = document.getElementById('chat-box');
+        const btn = document.getElementById('send-btn');
+        const message = input.value.trim();
+
+        if (!message) return;
+
+        // Add User Message to UI
+        appendMessage(message, 'user');
+        input.value = '';
+        btn.disabled = true;
+
+        // Add Loading State
+        const loadingId = appendMessage('Thinking...', 'bot');
+
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            });
+            
+            const data = await response.json();
+            
+            // Remove loading and add response
+            document.getElementById(loadingId).remove();
+            appendMessage(data.reply || "Sorry, I encountered an error.", 'bot');
+        } catch (err) {
+            document.getElementById(loadingId).remove();
+            appendMessage("Error connecting to the server.", 'bot');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    function appendMessage(text, sender) {
+        const chatBox = document.getElementById('chat-box');
+        const msgDiv = document.createElement('div');
+        const id = Math.random().toString(36).substr(2, 9);
+        msgDiv.id = id;
+        msgDiv.classList.add('message', sender);
+        msgDiv.innerText = text;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return id;
+    }
+
+    function handleEnter(e) {
+        if (e.key === 'Enter') sendMessage();
+    }
+</script>
+
+</body>
+</html>
